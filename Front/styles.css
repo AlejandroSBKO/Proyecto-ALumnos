@@ -1,0 +1,34 @@
+/* Estilos globales del proyecto */
+:root{
+  --text-default: #1f2937; /* gray-800 */
+  --muted: #6b7280; /* gray-500 */
+  --brand-600: #1f52c3;
+}
+
+
+/* Mejor contraste para elementos con clases claras por defecto */
+.text-muted {
+  color: var(--muted) !important;
+}
+
+/* Ajustes para mejor scroll en móviles */
+.modal-box, .overflow-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Botones y links */
+a, .btn, button {
+  color: inherit;
+}
+
+/* Tablas: borde y alto máximo con scroll interno */
+.table-container{
+  max-height: 60vh;
+  overflow:auto;
+}
+
+/* Pequeños refinamientos visuales */
+.card-title{ color: var(--text-default); }
+
+/* Utility: texto oscuro cuando se quiera forzar */
+.text-dark{ color: var(--text-default) !important; }

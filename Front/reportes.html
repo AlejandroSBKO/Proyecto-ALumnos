@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reportes</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-[#faf7f2]">
+<div class="flex h-screen w-full overflow-hidden">
+  <aside class="w-20 bg-brand-800 text-white flex flex-col py-8 space-y-8 items-center rounded-r-3xl shadow-xl">
+    <div class="text-xl font-bold rotate-[-90deg] tracking-wide">MAESTRO</div>
+    <nav class="flex flex-col space-y-6 text-white opacity-90 text-2xl">
+      <a href="index.html"><i class="fa-solid fa-home cursor-pointer hover:opacity-100"></i></a>
+      <a href="alumnos.html"><i class="fa-solid fa-users cursor-pointer hover:opacity-100"></i></a>
+      <a href="unidades.html"><i class="fa-solid fa-book cursor-pointer hover:opacity-100"></i></a>
+      <a href="equipos.html"><i class="fa-solid fa-people-group cursor-pointer hover:opacity-100"></i></a>
+      <a href="tareas.html"><i class="fa-solid fa-list-check cursor-pointer hover:opacity-100"></i></a>
+      <a href="reportes.html"><i class="fa-solid fa-chart-simple cursor-pointer hover:opacity-100"></i></a>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-10">
+    <h1 class="text-3xl font-semibold mb-6 text-brand-800">Reportes</h1>
+    <div class="bg-white rounded-3xl shadow-xl p-8 w-full border border-gray-100">
+      <div class="flex gap-4 mb-6">
+        <button class="btn" onclick="mostrarReporte('alumno')">Alumno</button>
+        <button class="btn" onclick="mostrarReporte('equipo')">Equipo</button>
+        <button class="btn" onclick="mostrarReporte('unidad')">Unidad</button>
+        <button class="btn" onclick="mostrarReporte('grupo')">Grupo</button>
+      </div>
+
+      <div id="contenedor-reportes">
+        <p class="text-gray-600">Selecciona un tipo de reporte.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<script>
+let selectedGrupo = null;
+window.onload = ()=>{
+  const params = new URLSearchParams(window.location.search);
+  const grupoParam = params.get('grupo');
+  if (grupoParam) { localStorage.setItem('selectedGrupo', grupoParam); }
+  selectedGrupo = localStorage.getItem('selectedGrupo') || null;
+  // If user opens report views that require a group, redirect to index to select
+  // We'll allow the generic 'grupo' report to show all groups even without selection
+};
+
+function mostrarReporte(tipo){
+  const cont = document.getElementById('contenedor-reportes'); cont.innerHTML = '';
+  if(tipo==='alumno'){
+    cont.innerHTML = `
+      <div class="flex gap-3 mb-4">
+        <div id="rep-grupo" class="font-semibold"></div>
+        <select id="rep-unidad" class="select select-bordered w-64"><option disabled selected>Unidad</option></select>
+        <select id="rep-alumno" class="select select-bordered w-64"><option disabled selected>Alumno</option></select>
+        <button class="btn" onclick="verReporteAlumno()">Ver</button>
+      </div>
+      <div id="rep-alumno-resultado"></div>
+    `;
+    cargarGruposRep();
+  }
+  if(tipo==='equipo'){
+    cont.innerHTML = `
+      <div class="flex gap-3 mb-4">
+        <div id="rep-grupo-e" class="font-semibold"></div>
+        <select id="rep-unidad-e" class="select select-bordered w-64"><option disabled selected>Unidad</option></select>
+        <select id="rep-equipo" class="select select-bordered w-64"><option disabled selected>Equipo</option></select>
+        <button class="btn" onclick="verReporteEquipo()">Ver</button>
+      </div>
+      <div id="rep-equipo-resultado"></div>
+    `;
+    cargarGruposRep('e');
+  }
+  if(tipo==='unidad'){
+    cont.innerHTML = `
+      <div class="flex gap-3 mb-4">
+        <div id="rep-grupo-u" class="font-semibold"></div>
+        <select id="rep-unidad-u" class="select select-bordered w-64"><option disabled selected>Unidad</option></select>
+        <button class="btn" onclick="verReporteUnidad()">Ver</button>
+      </div>
+      <div id="rep-unidad-resultado"></div>
+    `;
+    cargarGruposRep('u');
+  }
+  if(tipo==='grupo'){
+    cont.innerHTML = `<div id="rep-grupo-resultado"></div>`; fetch('/api/grupos').then(r=>r.json()).then(gs=>{ let html='<h3 class="font-semibold">Grupos</h3>'; gs.forEach(g=> html+=`<div class="p-3 border rounded mt-2">${g.numero} - ${g.materia} <a class="btn btn-sm ml-4" href="alumnos.html?grupo=${g.id_grupo}">Ver Alumnos</a></div>`); document.getElementById('rep-grupo-resultado').innerHTML = html; });
+  }
+}
+
+function cargarGruposRep(suffix){
+  // Si hay grupo persistente, usarlo
+  if(selectedGrupo){
+    // mostrar nombre en the container (we used divs instead of selects)
+    fetch(`/api/grupos/${selectedGrupo}`).then(r=>r.json()).then(g=>{
+      const selDiv = document.getElementById(suffix?`rep-grupo-${suffix}`:`rep-grupo`);
+      if(!selDiv) return;
+      selDiv.innerHTML = `${g.numero} - ${g.materia} <button class="btn btn-sm btn-ghost" id="btn-cambiar-grupo">Cambiar</button>`;
+      document.getElementById('btn-cambiar-grupo').onclick = ()=>{ localStorage.removeItem('selectedGrupo'); window.location.href='index.html'; };
+      // cargar unidades para ese grupo
+      cargarUnidadesRep(selectedGrupo, suffix);
+    });
+    return;
+  }
+  // si no hay persistente, cargar todos
+  fetch('/api/grupos').then(r=>r.json()).then(gs=>{ const sel = document.getElementById(suffix?`rep-grupo-${suffix}`:`rep-grupo`); if(!sel) return; gs.forEach(g=> sel.innerHTML += `<option value="${g.id_grupo}">${g.numero} - ${g.materia}</option>`); sel.addEventListener('change', ()=>cargarUnidadesRep(sel.value, suffix)); });
+}
+
+function cargarUnidadesRep(id_grupo, suffix){ fetch(`/api/unidades/${id_grupo}`).then(r=>r.json()).then(unis=>{ const sel = document.getElementById(suffix?`rep-unidad-${suffix}`:`rep-unidad`); if(!sel) return; sel.innerHTML = '<option disabled selected>Unidad</option>'; unis.forEach(u=> sel.innerHTML += `<option value="${u.id_unidad}">Unidad ${u.numero_unidad}</option>`); if(suffix==='e') sel.addEventListener('change', ()=>cargarEquiposRep(sel.value)); if(!suffix) sel.addEventListener('change', ()=>cargarAlumnosRep(id_grupo, sel.value)); if(suffix==='u') sel.addEventListener('change', ()=>{});
+}); }
+
+function cargarAlumnosRep(id_grupo, id_unidad){ fetch(`/api/alumnos/${id_grupo}`).then(r=>r.json()).then(al=>{ const sel = document.getElementById('rep-alumno'); sel.innerHTML = '<option disabled selected>Alumno</option>'; al.forEach(a=> sel.innerHTML += `<option value="${a.id_alumno}">${a.nombre}</option>`); }); }
+
+function cargarEquiposRep(id_unidad){ fetch(`/api/equipos/${id_unidad}`).then(r=>r.json()).then(es=>{ const sel = document.getElementById('rep-equipo'); sel.innerHTML = '<option disabled selected>Equipo</option>'; es.forEach(e=> sel.innerHTML += `<option value="${e.id_equipo}">${e.nombre_equipo}</option>`); }); }
+
+function verReporteAlumno(){ const id_unidad = document.getElementById('rep-unidad').value; const id_alumno = document.getElementById('rep-alumno').value; if(!id_unidad||!id_alumno) return alert('Seleccione unidad y alumno'); fetch(`/api/calificacion_unidad/${id_unidad}/${id_alumno}`).then(r=>r.json()).then(res=>{ document.getElementById('rep-alumno-resultado').innerHTML = `<div class="p-4 border rounded">Calificación final: <strong>${res.calificacion_final ?? res.calificacion_final === 0 ? res.calificacion_final : (res.calificacion_final)}</strong></div>`; }); }
+
+function verReporteEquipo(){ const id_equipo = document.getElementById('rep-equipo').value; if(!id_equipo) return; fetch(`/api/calificaciones/equipo/${id_equipo}`).then(r=>r.json()).then(data=>{ let html = '<h3 class="font-semibold">Calificaciones por tarea</h3>'; data.forEach(c=> html+=`<div class="p-2 border rounded mt-2">Tarea ${c.id_tarea}: <strong>${c.calificacion}</strong></div>`); document.getElementById('rep-equipo-resultado').innerHTML = html; }); }
+
+function verReporteUnidad(){ const id_unidad = document.getElementById('rep-unidad-u').value; if(!id_unidad) return; fetch(`/api/calificacion_unidad/calc/${id_unidad}`,{method:'POST'}).then(r=>r.json()).then(data=>{ let html = '<h3 class="font-semibold">Calificaciones por alumno</h3>'; data.forEach(d=> html+=`<div class="p-2 border rounded mt-2">Alumno ${d.id_alumno}: <strong>${d.calificacion_final ?? 0}</strong></div>`); document.getElementById('rep-unidad-resultado').innerHTML = html; }); }
+
+</script>
+</body>
+</html>

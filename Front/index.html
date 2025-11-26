@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control de Alumnos</title>
+
+  <!-- Tailwind + DaisyUI CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: "#f0f6ff",
+              100: "#dbe9ff",
+              200: "#bcd6ff",
+              300: "#8ab9ff",
+              400: "#5294ff",
+              500: "#2f6ef4",
+              600: "#1f52c3",
+              700: "#1b449a",
+              800: "#1b3a7c",
+              900: "#1b3367"
+            }
+          }
+        }
+      },
+      plugins: [daisyui],
+      daisyui: { themes: ["light"] }
+    };
+  </script>
+
+  <!-- Fuente elegante -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+  <!-- Global styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="bg-[#faf7f2]">
+
+<!-- CONTENEDOR PRINCIPAL -->
+<div class="flex h-screen w-full overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="w-20 bg-brand-800 text-white flex flex-col py-8 space-y-8 items-center rounded-r-3xl shadow-xl">
+
+    <div class="text-xl font-bold rotate-[-90deg] tracking-wide">MAESTRO</div>
+
+    <!-- Íconos estilo UI original -->
+    <nav class="flex flex-col space-y-6 text-white opacity-90">
+      <i class="fa-solid fa-users text-2xl cursor-pointer hover:opacity-100"></i>
+      <i class="fa-solid fa-book text-2xl cursor-pointer hover:opacity-100"></i>
+      <i class="fa-solid fa-list-check text-2xl cursor-pointer hover:opacity-100"></i>
+      <i class="fa-solid fa-gear text-2xl cursor-pointer hover:opacity-100"></i>
+    </nav>
+
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 p-10">
+
+    <h1 class="text-3xl font-semibold mb-6 text-brand-800">Mis Grupos</h1>
+
+    <!-- CARD PRINCIPAL -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 w-full border border-gray-100">
+
+      <!-- TABS -->
+      <div class="flex gap-8 mb-6 text-lg">
+        <button class="text-gray-400 hover:text-gray-600">
+          Grupos
+        </button>
+        <button class="text-gray-400 hover:text-gray-600">
+          Unidades
+        </button>
+        <a href="alumnos.html" class="font-semibold text-brand-700 border-b-2 border-brand-700 pb-1">
+          Alumnos
+        </a>
+      </div>
+
+      <!-- BARRA SUPERIOR -->
+      <div class="flex items-center justify-between mb-6">
+
+        <!-- COMBOBOX -->
+        <select id="select-grupo" class="select select-bordered w-60 bg-white">
+          <option disabled selected>Selecciona un grupo</option>
+        </select>
+
+        <!-- BOTONES -->
+        <div class="flex gap-4">
+          <button id="btn-ver-alumnos" class="btn bg-brand-600 hover:bg-brand-700 text-white px-6 rounded-xl shadow-md">
+            Ver Alumnos
+          </button>
+          <button id="btn-ver-unidades" class="btn bg-brand-600 hover:bg-brand-700 text-white px-6 rounded-xl shadow-md">
+            Ver Unidades
+          </button>
+          <button id="btn-ver-equipos" class="btn bg-brand-600 hover:bg-brand-700 text-white px-6 rounded-xl shadow-md">
+            Ver Equipos
+          </button>
+          <button id="btn-ver-tareas" class="btn bg-brand-600 hover:bg-brand-700 text-white px-6 rounded-xl shadow-md">
+            Ver Tareas
+          </button>
+          <button id="btn-reportes" class="btn bg-white border border-brand-600 text-brand-700 px-6 rounded-xl shadow-sm">
+            Reportes
+          </button>
+        </div>
+
+      </div>
+
+      <!-- TABLA (placeholder) -->
+      <div class="w-full text-center text-gray-500 py-12 border rounded-2xl bg-gray-50">
+        Selecciona un grupo para mostrar información.
+      </div>
+
+      <!-- PAGINACIÓN -->
+      <div class="flex justify-center mt-6 space-x-2 text-gray-600">
+        <button class="px-3 py-1 rounded-full hover:bg-gray-200">&lt;</button>
+        <button class="px-4 py-1 rounded-full bg-brand-600 text-white">1</button>
+        <button class="px-3 py-1 rounded-full hover:bg-gray-200">&gt;</button>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- FontAwesome Icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+<script>
+// Cargar grupos y enlazar botones
+window.onload = function () {
+  fetch("/api/grupos")
+    .then(r => r.json())
+    .then(data => {
+      const select = document.getElementById("select-grupo");
+      data.forEach(g => {
+        select.innerHTML += `<option value="${g.id_grupo}">${g.numero} - ${g.materia}</option>`;
+      });
+    });
+
+  document.getElementById('btn-ver-alumnos').onclick = () => {
+    const id = document.getElementById('select-grupo').value;
+    if (!id) return alert('Selecciona un grupo');
+    localStorage.setItem('selectedGrupo', id);
+    window.location.href = `alumnos.html`;
+  };
+
+  document.getElementById('btn-ver-unidades').onclick = () => {
+    const id = document.getElementById('select-grupo').value;
+    if (!id) return alert('Selecciona un grupo');
+    localStorage.setItem('selectedGrupo', id);
+    window.location.href = `unidades.html`;
+  };
+
+  document.getElementById('btn-ver-equipos').onclick = () => {
+    const id = document.getElementById('select-grupo').value;
+    if (!id) return alert('Selecciona un grupo');
+    localStorage.setItem('selectedGrupo', id);
+    window.location.href = `equipos.html`;
+  };
+
+  document.getElementById('btn-ver-tareas').onclick = () => {
+    const id = document.getElementById('select-grupo').value;
+    if (!id) return alert('Selecciona un grupo');
+    localStorage.setItem('selectedGrupo', id);
+    window.location.href = `tareas.html`;
+  };
+
+  document.getElementById('btn-reportes').onclick = () => {
+    const id = document.getElementById('select-grupo').value;
+    if (!id) return window.location.href = 'reportes.html';
+    localStorage.setItem('selectedGrupo', id);
+    window.location.href = `reportes.html`;
+  };
+};
+</script>
+
+</body>
+</html>

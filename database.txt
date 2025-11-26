@@ -1,0 +1,54 @@
+CREATE TABLE grupos (
+    id_grupo SERIAL PRIMARY KEY,
+    numero TEXT NOT NULL,
+    materia TEXT NOT NULL
+);
+
+CREATE TABLE alumnos (
+    id_alumno SERIAL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    matricula TEXT,
+    id_grupo INTEGER NOT NULL REFERENCES grupos(id_grupo) ON DELETE CASCADE
+);
+
+CREATE TABLE unidades (
+    id_unidad SERIAL PRIMARY KEY,
+    numero_unidad INTEGER NOT NULL,
+    descripcion TEXT,
+    id_grupo INTEGER NOT NULL REFERENCES grupos(id_grupo) ON DELETE CASCADE
+);
+
+CREATE TABLE equipos (
+    id_equipo SERIAL PRIMARY KEY,
+    nombre_equipo TEXT NOT NULL,
+    id_unidad INTEGER NOT NULL REFERENCES unidades(id_unidad) ON DELETE CASCADE
+);
+
+CREATE TABLE equipo_alumnos (
+    id_equipo INTEGER NOT NULL REFERENCES equipos(id_equipo) ON DELETE CASCADE,
+    id_alumno INTEGER NOT NULL REFERENCES alumnos(id_alumno) ON DELETE CASCADE,
+    PRIMARY KEY (id_equipo, id_alumno)
+);
+
+CREATE TABLE tareas (
+    id_tarea SERIAL PRIMARY KEY,
+    nombre_tarea TEXT NOT NULL,
+    descripcion TEXT,
+    valor REAL NOT NULL,
+    id_unidad INTEGER NOT NULL REFERENCES unidades(id_unidad) ON DELETE CASCADE
+);
+
+CREATE TABLE calificaciones_equipos (
+    id_calificacion SERIAL PRIMARY KEY,
+    id_equipo INTEGER NOT NULL REFERENCES equipos(id_equipo) ON DELETE CASCADE,
+    id_tarea INTEGER NOT NULL REFERENCES tareas(id_tarea) ON DELETE CASCADE,
+    calificacion REAL NOT NULL
+);
+
+CREATE TABLE calificacion_unidad (
+    id_calif_unidad SERIAL PRIMARY KEY,
+    id_alumno INTEGER NOT NULL REFERENCES alumnos(id_alumno) ON DELETE CASCADE,
+    id_unidad INTEGER NOT NULL REFERENCES unidades(id_unidad) ON DELETE CASCADE,
+    calificacion_final REAL NOT NULL,
+    UNIQUE (id_alumno, id_unidad)
+);

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alumnos</title>
+
+  <!-- Tailwind + DaisyUI CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: "#f0f6ff",
+              100: "#dbe9ff",
+              200: "#bcd6ff",
+              300: "#8ab9ff",
+              400: "#5294ff",
+              500: "#2f6ef4",
+              600: "#1f52c3",
+              700: "#1b449a",
+              800: "#1b3a7c",
+              900: "#1b3367"
+            }
+          }
+        }
+      },
+      plugins: [daisyui],
+      daisyui: { themes: ["light"] }
+    };
+  </script>
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+
+</head>
+
+<body class="bg-[#faf7f2]">
+
+<!-- LAYOUT -->
+<div class="flex h-screen w-full">
+
+  <!-- SIDEBAR -->
+  <aside class="w-20 bg-brand-800 text-white flex flex-col py-8 space-y-8 items-center rounded-r-3xl shadow-xl">
+
+    <div class="text-xl font-bold rotate-[-90deg] tracking-wide">MAESTRO</div>
+
+    <nav class="flex flex-col space-y-6 text-white opacity-90 text-2xl">
+      <a href="index.html"><i class="fa-solid fa-home cursor-pointer hover:opacity-100"></i></a>
+      <i class="fa-solid fa-users cursor-pointer hover:opacity-100"></i>
+      <i class="fa-solid fa-book cursor-pointer hover:opacity-100"></i>
+      <i class="fa-solid fa-list-check cursor-pointer hover:opacity-100"></i>
+      <i class="fa-solid fa-gear cursor-pointer hover:opacity-100"></i>
+    </nav>
+
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="flex-1 p-10 overflow-auto">
+
+    <h1 class="text-3xl font-semibold mb-6 text-brand-800">
+      Alumnos del Grupo
+    </h1>
+
+    <!-- CARD PRINCIPAL -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 w-full border border-gray-100">
+
+      <!-- TABS -->
+      <div class="flex gap-8 mb-6 text-lg">
+        <a href="index.html" class="text-gray-400 hover:text-gray-600">Grupos</a>
+        <span class="font-semibold text-brand-700 border-b-2 border-brand-700 pb-1">Alumnos</span>
+        <a href="unidades.html" class="text-gray-400 hover:text-gray-600">Unidades</a>
+      </div>
+
+      <!-- SELECCIÓN DE GRUPO -->
+      <div class="flex justify-between items-center mb-6">
+        <div id="grupo-info" class="flex items-center gap-4">
+          <!-- Se mostrará info del grupo seleccionado -->
+        </div>
+
+        <div class="flex gap-3">
+          <button class="btn bg-brand-600 hover:bg-brand-700 text-white px-6 rounded-xl shadow-md"
+                  onclick="mostrarModalNuevoAlumno()">
+            + Agregar Alumno
+          </button>
+          <button id="btn-ir-unidades" class="btn btn-outline">Ver Unidades</button>
+          <button id="btn-ir-equipos" class="btn btn-outline">Ver Equipos</button>
+          <button id="btn-ir-reportes" class="btn btn-outline">Reportes</button>
+        </div>
+      </div>
+
+      <!-- TABLA -->
+      <div class="bg-white rounded-3xl shadow-md border border-gray-100 overflow-auto">
+
+        <table class="table w-full">
+          <thead class="bg-gray-100 text-gray-600">
+            <tr>
+              <th>Nombre</th>
+              <th>Matrícula</th>
+              <th class="text-right pr-6">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-alumnos">
+            <!-- Se llena dinámicamente -->
+          </tbody>
+        </table>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- MODAL Crear alumno -->
+<input type="checkbox" id="modal-alumno" class="modal-toggle" />
+<div class="modal">
+  <div class="modal-box">
+    <h3 class="font-bold text-xl mb-4">Agregar Alumno</h3>
+
+    <input id="nuevo_nombre" type="text" placeholder="Nombre"
+           class="input input-bordered w-full mb-3" />
+
+    <input id="nuevo_matricula" type="text" placeholder="Matrícula"
+           class="input input-bordered w-full mb-3" />
+
+    <div class="modal-action">
+      <label for="modal-alumno" class="btn">Cancelar</label>
+      <button onclick="guardarAlumno()" class="btn bg-brand-600 text-white">Guardar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- FontAwesome -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+<!-- ===================================== -->
+<!--            SCRIPT ALUMNOS             -->
+<!-- ===================================== -->
+
+<script>
+
+// Cargar grupos al iniciar
+window.onload = function () {
+  // Preferir localStorage, si hay ?grupo= lo guardamos
+  const params = new URLSearchParams(window.location.search);
+  const grupoParam = params.get('grupo');
+  let selected = localStorage.getItem('selectedGrupo') || grupoParam;
+  if (grupoParam && grupoParam !== localStorage.getItem('selectedGrupo')) {
+    localStorage.setItem('selectedGrupo', grupoParam);
+    selected = grupoParam;
+  }
+
+  if (!selected) {
+    // No hay grupo seleccionado: volver al index para seleccionar
+    window.location.href = 'index.html';
+    return;
+  }
+
+  // Mostrar info del grupo y cargar alumnos
+  fetch(`/api/grupos/${selected}`).then(r=>r.json()).then(g=>{
+    const info = document.getElementById('grupo-info');
+    info.innerHTML = `<div class="font-semibold">${g.numero} - ${g.materia}</div><button class="btn btn-sm btn-ghost" id="btn-cambiar-grupo">Cambiar Grupo</button>`;
+    document.getElementById('btn-cambiar-grupo').onclick = ()=>{ localStorage.removeItem('selectedGrupo'); window.location.href='index.html'; };
+    cargarAlumnos();
+  }).catch(()=>{ window.location.href='index.html'; });
+
+  // Botones de navegación
+  document.getElementById('btn-ir-unidades').onclick = () => { window.location.href = `unidades.html`; };
+  document.getElementById('btn-ir-equipos').onclick = () => { window.location.href = `equipos.html`; };
+  document.getElementById('btn-ir-reportes').onclick = () => { window.location.href = `reportes.html`; };
+};
+
+// Detectar cambio de grupo no aplica: usamos grupo persistente
+
+
+// =========================
+//    LISTAR ALUMNOS
+// =========================
+function cargarAlumnos() {
+  const idGrupo = localStorage.getItem('selectedGrupo');
+  if(!idGrupo){ window.location.href = 'index.html'; return; }
+  fetch(`/api/alumnos/${idGrupo}`)
+        .then(r => r.json())
+        .then(data => {
+            const tabla = document.getElementById("tabla-alumnos");
+            tabla.innerHTML = "";
+
+            data.forEach(a => {
+                tabla.innerHTML += `
+                <tr class="hover:bg-gray-50">
+                    <td>${a.nombre}</td>
+                    <td>${a.matricula ?? "-"}</td>
+                    <td class="text-right pr-6">
+                        <button class="btn btn-sm btn-outline" onclick="editar(${a.id_alumno})">Editar</button>
+                        <button class="btn btn-sm btn-error text-white" onclick="eliminarAlumno(${a.id_alumno})">X</button>
+                    </td>
+                </tr>
+                `;
+            });
+        });
+}
+
+
+// =========================
+//      MODAL
+// =========================
+function mostrarModalNuevoAlumno() {
+    document.getElementById("modal-alumno").checked = true;
+}
+
+
+// =========================
+//    CREAR ALUMNO
+// =========================
+function guardarAlumno() {
+    const nombre = document.getElementById("nuevo_nombre").value;
+    const matricula = document.getElementById("nuevo_matricula").value;
+  const id_grupo = localStorage.getItem('selectedGrupo');
+
+  fetch("/api/alumnos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, matricula, id_grupo })
+    })
+    .then(() => {
+        document.getElementById("modal-alumno").checked = false;
+        cargarAlumnos();
+    });
+}
+
+
+// =========================
+//      ELIMINAR
+// =========================
+function eliminarAlumno(id) {
+    fetch(`/api/alumnos/${id}`, { method: "DELETE" })
+        .then(() => cargarAlumnos());
+}
+
+
+// =========================
+//  PLACEHOLDERS (EDITAR)
+// =========================
+function editar(id) {
+    alert("Función de editar pendiente. Si quieres la agrego.");
+}
+
+</script>
+
+</body>
+</html>

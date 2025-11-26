@@ -5,6 +5,15 @@
   --brand-600: #1f52c3;
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: var(--text-default);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
 
 /* Mejor contraste para elementos con clases claras por defecto */
 .text-muted {
@@ -32,3 +41,78 @@ a, .btn, button {
 
 /* Utility: texto oscuro cuando se quiera forzar */
 .text-dark{ color: var(--text-default) !important; }
+
+/* ---- Contraste: asegurar texto visible sobre fondos oscuros ---- */
+/* Botones sólidos: forzar texto blanco excepto variantes ghost/outline */
+.btn:not(.btn-ghost):not(.btn-outline) {
+  color: #ffffff !important;
+}
+.btn.btn-ghost, .btn.btn-outline {
+  color: var(--text-default) !important;
+}
+
+/* Algunos fondos oscuros comunes (brand and dark grays) deben mostrar texto claro */
+.bg-brand-600, .bg-brand-700, .bg-brand-800,
+.bg-gray-800, .bg-gray-900, .bg-black,
+.btn-error, .btn-primary {
+  color: #ffffff !important;
+}
+
+/* Modal boxes pueden estar tematizadas; forzamos color claro si el fondo es oscuro por clase */
+.modal-box.bg-black, .modal-box.bg-gray-800, .modal-box.bg-gray-900, .modal-box.bg-brand-800 {
+  color: #ffffff !important;
+}
+
+/* Asegurar que los textos dentro de botones oscuros (enlaces, iconos) también sean blancos */
+.btn:not(.btn-ghost):not(.btn-outline) a, .btn:not(.btn-ghost):not(.btn-outline) i { color: inherit !important; }
+
+/* Si prefieres, puedo añadir una clase utilitaria `.text-on-dark` para marcar manualmente elementos que necesiten texto claro. */
+.text-on-dark{ color: #ffffff !important; }
+
+/* ---- HACER QUE EL TEXTO DE TODOS LOS INPUTS SEA BLANCO ---- */
+/* Esta regla debe ir ANTES de las reglas de modales y tener alta especificidad */
+input:not([type="checkbox"]):not([type="radio"]), 
+textarea {
+  color: #ffffff !important;
+}
+
+/* Para placeholder también */
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ---- Forzar modales claros y asegurar legibilidad en su contenido ---- */
+/* Muchos temas y DaisyUI pueden pintar modales oscuros; hacemos el modal-box siempre claro */
+.modal-box {
+  background-color: #ffffff !important;
+  color: var(--text-default) !important;
+}
+
+/* MODIFICACIÓN: Excluir inputs y textareas de la regla de color oscuro en modales */
+.modal-box label, .modal-box p, .modal-box h1, .modal-box h2, .modal-box h3, .modal-box h4, .modal-box h5, .modal-box h6 {
+  color: var(--text-default) !important;
+}
+
+/* Pero si hay botones de fondo oscuro dentro del modal, que sigan mostrando texto blanco */
+.modal-box .btn:not(.btn-ghost):not(.btn-outline) {
+  color: #ffffff !important;
+}
+
+/* Aumentar especificidad para botones globales (fallback adicional) */
+button.btn, .btn {
+  color: #ffffff !important;
+}
+
+/* Por si hay elementos con clases inline de color oscuro, forzamos contraste en modales */
+.modal-box * { -webkit-font-smoothing:antialiased; }
+
+/* Texto blanco cuando el input tenga fondo oscuro */
+input.bg-dark, textarea.bg-dark, select.bg-dark {
+  color: #ffffff !important;
+}
+
+/* Utilidad opcional */
+.bg-dark {
+  background-color: #1f2937 !important; /* gray-800 */
+  color: #ffffff !important;
+}

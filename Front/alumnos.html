@@ -143,6 +143,19 @@
   </div>
 </div>
 
+<!-- MODAL Confirmar eliminar alumno -->
+<input type="checkbox" id="modal-eliminar-alumno-checkbox" class="modal-toggle" />
+<div class="modal" id="modal-eliminar-alumno">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Confirmar eliminación</h3>
+    <p class="py-4">¿Deseas eliminar este alumno?</p>
+    <div class="modal-action">
+      <label for="modal-eliminar-alumno-checkbox" class="btn">Cancelar</label>
+      <button id="btn-confirmar-eliminar-alumno" class="btn btn-error text-white">Eliminar</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- FontAwesome -->
 <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
@@ -154,6 +167,7 @@
 <script>
 
 // Cargar grupos al iniciar
+let editingAlumnoId = null;
 window.onload = function () {
   // Preferir localStorage, si hay ?grupo= lo guardamos
   const params = new URLSearchParams(window.location.search);
@@ -219,7 +233,11 @@ function cargarAlumnos() {
 //      MODAL
 // =========================
 function mostrarModalNuevoAlumno() {
-    document.getElementById("modal-alumno").checked = true;
+  // Abrir modal en modo creación
+  editingAlumnoId = null;
+  document.getElementById('nuevo_nombre').value = '';
+  document.getElementById('nuevo_matricula').value = '';
+  document.getElementById("modal-alumno").checked = true;
 }
 
 
@@ -230,7 +248,21 @@ function guardarAlumno() {
     const nombre = document.getElementById("nuevo_nombre").value;
     const matricula = document.getElementById("nuevo_matricula").value;
   const id_grupo = localStorage.getItem('selectedGrupo');
+  if(editingAlumnoId){
+    // Editar existente
+    fetch(`/api/alumnos/${editingAlumnoId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, matricula })
+    }).then(()=>{
+      editingAlumnoId = null;
+      document.getElementById("modal-alumno").checked = false;
+      cargarAlumnos();
+    }).catch(err=>{ console.error(err); alert('Error editando alumno'); });
+    return;
+  }
 
+  // Crear nuevo
   fetch("/api/alumnos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -239,7 +271,7 @@ function guardarAlumno() {
     .then(() => {
         document.getElementById("modal-alumno").checked = false;
         cargarAlumnos();
-    });
+    }).catch(err=>{ console.error(err); alert('Error creando alumno'); });
 }
 
 
@@ -247,8 +279,16 @@ function guardarAlumno() {
 //      ELIMINAR
 // =========================
 function eliminarAlumno(id) {
+  // abrir modal de confirmación y ejecutar DELETE al confirmar
+  const modal = document.getElementById('modal-eliminar-alumno');
+  const chk = document.getElementById('modal-eliminar-alumno-checkbox');
+  const btn = document.getElementById('btn-confirmar-eliminar-alumno');
+  chk.checked = true;
+  btn.onclick = function(){
     fetch(`/api/alumnos/${id}`, { method: "DELETE" })
-        .then(() => cargarAlumnos());
+    .then(() => { chk.checked = false; cargarAlumnos(); })
+    .catch(err=>{ console.error(err); chk.checked = false; alert('Error eliminando alumno'); });
+  };
 }
 
 
@@ -256,7 +296,17 @@ function eliminarAlumno(id) {
 //  PLACEHOLDERS (EDITAR)
 // =========================
 function editar(id) {
-    alert("Función de editar pendiente. Si quieres la agrego.");
+    // abrir modal en modo edición: obtener datos del alumno y prefijar inputs
+    const idGrupo = localStorage.getItem('selectedGrupo');
+    if(!idGrupo) return;
+    fetch(`/api/alumnos/${idGrupo}`).then(r=>r.json()).then(data=>{
+      const a = data.find(x=> x.id_alumno === id);
+      if(!a) { alert('Alumno no encontrado'); return; }
+      editingAlumnoId = id;
+      document.getElementById('nuevo_nombre').value = a.nombre || '';
+      document.getElementById('nuevo_matricula').value = a.matricula || '';
+      document.getElementById('modal-alumno').checked = true;
+    }).catch(err=>{ console.error(err); alert('Error cargando alumno'); });
 }
 
 </script>

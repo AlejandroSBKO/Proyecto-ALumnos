@@ -506,6 +506,5 @@ def obtener_calificacion_unidad(id_unidad, id_alumno):
 
 
 if __name__ == "__main__":
-    threading.Timer(1.0, abrir_navegador).start()
+    threading.Timer(2.0, abrir_navegador).start()
     app.run(debug=True)
-

@@ -27,11 +27,28 @@
   <main class="flex-1 p-10">
     <h1 class="text-3xl font-semibold mb-6 text-brand-800">Unidades</h1>
     <div class="bg-white rounded-3xl shadow-xl p-8 w-full border border-gray-100">
-      <div class="flex gap-8 mb-6 text-lg">
-        <a href="index.html" class="text-gray-400 hover:text-gray-600">Grupos</a>
-        <a href="alumnos.html" class="text-gray-400 hover:text-gray-600">Alumnos</a>
-        <span class="font-semibold text-brand-700 border-b-2 border-brand-700 pb-1">Unidades</span>
+      <!-- TABS (normalizado) -->
+      <div id="main-tabs" class="flex gap-6 mb-6 text-lg">
+        <a href="index.html" data-page="index" class="tab-link text-gray-400 hover:text-gray-600">Grupos</a>
+        <a href="alumnos.html" data-page="alumnos" class="tab-link text-gray-400 hover:text-gray-600">Alumnos</a>
+        <a href="unidades.html" data-page="unidades" class="tab-link text-gray-400 hover:text-gray-600">Unidades</a>
+        <a href="equipos.html" data-page="equipos" class="tab-link text-gray-400 hover:text-gray-600">Equipos</a>
+        <a href="tareas.html" data-page="tareas" class="tab-link text-gray-400 hover:text-gray-600">Tareas</a>
+        <a href="Calificar.html" data-page="calificar" class="tab-link text-gray-400 hover:text-gray-600">Calificar</a>
+        <a href="reportes.html" data-page="reportes" class="tab-link text-gray-400 hover:text-gray-600">Reportes</a>
       </div>
+      <script>
+        (function(){
+          const path = window.location.pathname.split('/').pop() || 'index.html';
+          const page = (path.replace('.html','') || 'index').toLowerCase();
+          document.querySelectorAll('#main-tabs .tab-link').forEach(a=>{
+            if(a.dataset.page===page){
+              a.classList.remove('text-gray-400');
+              a.classList.add('font-semibold','text-brand-700','border-b-2','border-brand-700','pb-1');
+            }
+          });
+        })();
+      </script>
 
       <div class="flex justify-between items-center mb-6">
         <div id="grupo-info" class="flex items-center gap-4"></div>

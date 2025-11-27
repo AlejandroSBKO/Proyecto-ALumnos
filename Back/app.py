@@ -99,7 +99,7 @@ def crear_grupo():
     data = request.json
     try:
         result = supabase.table("grupos").insert({
-            "nombre": data["nombre"],
+            "numero": data["numero"],
             "materia": data["materia"]
         }).execute()
         return jsonify(result.data), 201
@@ -113,7 +113,7 @@ def editar_grupo(id_grupo):
     data = request.json
     try:
         result = supabase.table("grupos").update({
-            "nombre": data.get("nombre"),
+            "numero": data.get("numero"),
             "materia": data.get("materia")
         }).eq("id_grupo", id_grupo).execute()
         return jsonify(result.data), 200
@@ -437,20 +437,38 @@ def calcular_calificacion_final(id_unidad, id_alumno):
 
         id_equipo = pertenencia.data[0]["id_equipo"]
 
-        # Obtener todas las tareas de la unidad
-        tareas = supabase.table("tareas").select("id_tarea").eq("id_unidad", id_unidad).execute()
+        # Obtener todas las tareas de la unidad con su valor
+        tareas = supabase.table("tareas").select("id_tarea", "valor").eq("id_unidad", id_unidad).execute()
         if not tareas.data:
             return None
 
         tarea_ids = [t["id_tarea"] for t in tareas.data]
 
-        # Obtener calificaciones del equipo en esas tareas
-        califs = supabase.table("calificaciones_equipos").select("calificacion").eq("id_equipo", id_equipo).in_("id_tarea", tarea_ids).execute()
-        if not califs.data:
-            promedio = 0.0
-        else:
-            vals = [c["calificacion"] for c in califs.data]
-            promedio = sum(vals) / len(vals) if vals else 0.0
+        # Obtener calificaciones del equipo en esas tareas (id_tarea + calificacion)
+        califs = supabase.table("calificaciones_equipos").select("id_tarea", "calificacion").eq("id_equipo", id_equipo).in_("id_tarea", tarea_ids).execute()
+
+        # Mapear calificaciones por id_tarea
+        cal_map = {}
+        if califs.data:
+            for c in califs.data:
+                try:
+                    cal_map[c["id_tarea"]] = float(c.get("calificacion", 0.0))
+                except Exception:
+                    cal_map[c["id_tarea"]] = 0.0
+
+        # Sumar ponderada: para cada tarea usar (valor/100) * calificacion_del_equipo
+        total = 0.0
+        for t in tareas.data:
+            vid = t.get("id_tarea")
+            valor = t.get("valor") or 0.0
+            try:
+                peso = float(valor) / 100.0
+            except Exception:
+                peso = 0.0
+            cal_equipo = cal_map.get(vid, 0.0)
+            total += peso * float(cal_equipo)
+
+        promedio = total
 
         # Upsert en calificacion_unidad (unique por id_alumno, id_unidad)
         existe = supabase.table("calificacion_unidad").select("*").eq("id_alumno", id_alumno).eq("id_unidad", id_unidad).execute()

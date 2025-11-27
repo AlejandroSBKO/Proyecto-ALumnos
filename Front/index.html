@@ -56,12 +56,14 @@
 
     <div class="text-xl font-bold rotate-[-90deg] tracking-wide">MAESTRO</div>
 
-    <!-- Íconos estilo UI original -->
+    <!-- Íconos estilo UI (enlaces) -->
     <nav class="flex flex-col space-y-6 text-white opacity-90">
-      <i class="fa-solid fa-users text-2xl cursor-pointer hover:opacity-100"></i>
-      <i class="fa-solid fa-book text-2xl cursor-pointer hover:opacity-100"></i>
-      <i class="fa-solid fa-list-check text-2xl cursor-pointer hover:opacity-100"></i>
-      <i class="fa-solid fa-gear text-2xl cursor-pointer hover:opacity-100"></i>
+      <a href="alumnos.html"><i class="fa-solid fa-users text-2xl cursor-pointer hover:opacity-100"></i></a>
+      <a href="unidades.html"><i class="fa-solid fa-book text-2xl cursor-pointer hover:opacity-100"></i></a>
+      <a href="tareas.html"><i class="fa-solid fa-list-check text-2xl cursor-pointer hover:opacity-100"></i></a>
+      <a href="equipos.html"><i class="fa-solid fa-people-group text-2xl cursor-pointer hover:opacity-100"></i></a>
+      <a href="reportes.html"><i class="fa-solid fa-chart-simple text-2xl cursor-pointer hover:opacity-100"></i></a>
+      <a href="Calificar.html"><i class="fa-solid fa-pen-to-square text-2xl cursor-pointer hover:opacity-100"></i></a>
     </nav>
 
   </aside>
@@ -74,18 +76,28 @@
     <!-- CARD PRINCIPAL -->
     <div class="bg-white rounded-3xl shadow-xl p-8 w-full border border-gray-100">
 
-      <!-- TABS -->
-      <div class="flex gap-8 mb-6 text-lg">
-        <button class="text-gray-400 hover:text-gray-600">
-          Grupos
-        </button>
-        <button class="text-gray-400 hover:text-gray-600">
-          Unidades
-        </button>
-        <a href="alumnos.html" class="font-semibold text-brand-700 border-b-2 border-brand-700 pb-1">
-          Alumnos
-        </a>
+      <!-- TABS (normalizado) -->
+      <div id="main-tabs" class="flex gap-6 mb-6 text-lg">
+        <a href="index.html" data-page="index" class="tab-link text-gray-400 hover:text-gray-600">Grupos</a>
+        <a href="alumnos.html" data-page="alumnos" class="tab-link text-gray-400 hover:text-gray-600">Alumnos</a>
+        <a href="unidades.html" data-page="unidades" class="tab-link text-gray-400 hover:text-gray-600">Unidades</a>
+        <a href="equipos.html" data-page="equipos" class="tab-link text-gray-400 hover:text-gray-600">Equipos</a>
+        <a href="tareas.html" data-page="tareas" class="tab-link text-gray-400 hover:text-gray-600">Tareas</a>
+        <a href="Calificar.html" data-page="calificar" class="tab-link text-gray-400 hover:text-gray-600">Calificar</a>
+        <a href="reportes.html" data-page="reportes" class="tab-link text-gray-400 hover:text-gray-600">Reportes</a>
       </div>
+      <script>
+        (function(){
+          const path = window.location.pathname.split('/').pop() || 'index.html';
+          const page = path.replace('.html','') || 'index';
+          document.querySelectorAll('#main-tabs .tab-link').forEach(a=>{
+            if(a.dataset.page===page){
+              a.classList.remove('text-gray-400');
+              a.classList.add('font-semibold','text-brand-700','border-b-2','border-brand-700','pb-1');
+            }
+          });
+        })();
+      </script>
 
       <!-- BARRA SUPERIOR -->
       <div class="flex items-center justify-between mb-6">
@@ -112,6 +124,7 @@
           <button id="btn-reportes" class="btn bg-white border border-brand-600 text-brand-700 px-6 rounded-xl shadow-sm">
             Reportes
           </button>
+          <button id="btn-nuevo-grupo" class="btn btn-outline text-brand-700 px-4 rounded-xl">Nuevo Grupo</button>
         </div>
 
       </div>
@@ -140,14 +153,9 @@
 <script>
 // Cargar grupos y enlazar botones
 window.onload = function () {
-  fetch("/api/grupos")
-    .then(r => r.json())
-    .then(data => {
-      const select = document.getElementById("select-grupo");
-      data.forEach(g => {
-        select.innerHTML += `<option value="${g.id_grupo}">${g.numero} - ${g.materia}</option>`;
-      });
-    });
+  loadGroups();
+
+  document.getElementById('btn-nuevo-grupo').onclick = ()=>{ document.getElementById('modal-grupo').checked = true; };
 
   document.getElementById('btn-ver-alumnos').onclick = () => {
     const id = document.getElementById('select-grupo').value;
@@ -184,7 +192,58 @@ window.onload = function () {
     window.location.href = `reportes.html`;
   };
 };
+
+function loadGroups(){
+  fetch('/api/grupos').then(r=>r.json()).then(data=>{
+    const select = document.getElementById('select-grupo');
+    const prev = select.value;
+    select.innerHTML = '<option disabled selected>Selecciona un grupo</option>';
+    data.forEach(g=> select.innerHTML += `<option value="${g.id_grupo}">${g.numero} - ${g.materia}</option>`);
+    // intentar restaurar selección previa
+    if(prev){ try{ select.value = prev; }catch(e){} }
+  }).catch(err=>{ console.error('Error cargando grupos', err); });
+}
+
+function crearGrupo(){
+  const numero = document.getElementById('nuevo-numero').value.trim();
+  const materia = document.getElementById('nuevo-materia').value.trim();
+  if(!numero || !materia) return alert('Rellena número y materia');
+  fetch('/api/grupos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero, materia})})
+    .then(r=>{
+      if(!r.ok) throw new Error('Error al crear grupo');
+      return r.json();
+    }).then(res=>{
+      // res puede ser array o objeto
+      let nuevo = Array.isArray(res) ? res[0] : res;
+      // cerrar modal
+      document.getElementById('modal-grupo').checked = false;
+      // recargar lista
+      loadGroups();
+      // seleccionar el nuevo grupo si vino con id
+      try{ if(nuevo && nuevo.id_grupo){ localStorage.setItem('selectedGrupo', nuevo.id_grupo); const sel = document.getElementById('select-grupo'); sel.value = nuevo.id_grupo; } }catch(e){}
+    }).catch(err=>{ console.error(err); alert('No se pudo crear el grupo'); });
+}
 </script>
+
+<!-- Modal crear grupo -->
+<input type="checkbox" id="modal-grupo" class="modal-toggle" />
+<div class="modal">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Crear nuevo grupo</h3>
+    <div class="mt-4">
+      <label class="block text-sm font-medium text-gray-700">Número</label>
+      <input id="nuevo-numero" class="input input-bordered w-full mt-1" placeholder="Ej. Grupo A" />
+    </div>
+    <div class="mt-3">
+      <label class="block text-sm font-medium text-gray-700">Materia</label>
+      <input id="nuevo-materia" class="input input-bordered w-full mt-1" placeholder="Ej. Matemáticas" />
+    </div>
+    <div class="modal-action">
+      <label for="modal-grupo" class="btn">Cancelar</label>
+      <button onclick="crearGrupo()" class="btn bg-brand-600 text-white">Crear</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
